@@ -11,16 +11,6 @@
   force = true  # Redirect all routes to the index.html for Single Page Application (SPA) routing
 
 [[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200  # Make sure this works for your serverless functions
-  [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/callback"
   to = "/index.html"
   status = 200
