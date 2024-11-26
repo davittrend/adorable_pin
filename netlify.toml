@@ -1,35 +1,27 @@
 [build]
-command = "npm run build"
-publish = "dist"
-functions = "netlify/functions"
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [functions]
-node_bundler = "esbuild"
-external_node_modules = ["@netlify/functions"]
-
-[[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/:splat"
-status = 200
-
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
-force = true
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/functions"]
 
 [[headers]]
-for = "/*"
-[headers.values]
-  Access-Control-Allow-Origin = "*"
-  Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-  Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  Access-Control-Max-Age = "2592000"
-  Content-Security-Policy = "frame-ancestors 'self'"
-  X-Frame-Options = "DENY"
-  X-XSS-Protection = "1; mode=block"
-  Referrer-Policy = "strict-origin-when-cross-origin"
-  Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-
-[build.environment]
-NODE_VERSION = "16"
+  for = "/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
