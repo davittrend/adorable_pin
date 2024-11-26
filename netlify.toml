@@ -1,34 +1,35 @@
 [build]
-  command = "npm run build"  # Command to build the project
-  publish = "dist"  # Folder to publish the build output (make sure this matches your actual output directory)
-  functions = "netlify/functions"  # Directory for Netlify functions
-  node_bundler = "esbuild"  # Bundler for Node.js functions
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = true  # Redirect all routes to the index.html for Single Page Application (SPA) routing
-
-[[redirects]]
-  from = "/callback"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+command = "npm run build"
+publish = "dist"
+functions = "netlify/functions"
 
 [functions]
-  node_bundler = "esbuild"  # Bundler for Node.js functions
-  external_node_modules = ["@netlify/functions"]  # Add external Node.js modules needed in your functions
+node_bundler = "esbuild"
+external_node_modules = ["@netlify/functions"]
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/:splat"
+status = 200
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+force = true
 
 [[headers]]
-  for = "/*"  # Apply these headers globally
-  [headers.values]
+for = "/*"
+[headers.values]
   Access-Control-Allow-Origin = "*"
-  Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-  Access-Control-Allow-Headers = "Content-Type"
+  Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+  Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  Access-Control-Max-Age = "2592000"
+  Content-Security-Policy = "frame-ancestors 'self'"
+  X-Frame-Options = "DENY"
+  X-XSS-Protection = "1; mode=block"
+  Referrer-Policy = "strict-origin-when-cross-origin"
+  Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
 [build.environment]
-NODE_VERSION = "14"
+NODE_VERSION = "16"
