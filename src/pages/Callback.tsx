@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
@@ -7,28 +7,28 @@ export default function Callback() {
 const [searchParams] = useSearchParams();
 const navigate = useNavigate();
 const addAccount = useAuthStore((state) => state.addAccount);
+const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
-  const code = searchParams.get('code');
-  const state = searchParams.get('state');
-  const storedState = sessionStorage.getItem('pinterest_auth_state');
+  const handleAuth = async () => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const storedState = sessionStorage.getItem('pinterest_auth_state');
 
-  // Clear stored state
-  sessionStorage.removeItem('pinterest_auth_state');
+    sessionStorage.removeItem('pinterest_auth_state');
 
-  if (!code) {
-    console.error('No authorization code received');
-    navigate('/', { state: { error: 'Authorization code not received' } });
-    return;
-  }
+    if (!code) {
+      setError('Authorization code not received');
+      navigate('/', { state: { error: 'Authorization code not received' } });
+      return;
+    }
 
-  if (state !== storedState) {
-    console.error('State mismatch', { received: state, stored: storedState });
-    navigate('/', { state: { error: 'Invalid state parameter' } });
-    return;
-  }
+    if (state !== storedState) {
+      setError('Invalid state parameter');
+      navigate('/', { state: { error: 'Invalid state parameter' } });
+      return;
+    }
 
-  const exchangeToken = async () => {
     try {
       // Exchange code for token
       const tokenResponse = await fetch('/.netlify/functions/exchange-token', {
@@ -39,13 +39,11 @@ useEffect(() => {
         body: JSON.stringify({ code }),
       });
 
-      if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        throw new Error(errorData.error || 'Failed to exchange token');
-      }
-
       const tokenData = await tokenResponse.json();
-      console.log('Token exchange successful');
+
+      if (!tokenResponse.ok || tokenData.error) {
+        throw new Error(tokenData.error || 'Failed to exchange token');
+      }
 
       // Fetch user profile
       const profileResponse = await fetch('/.netlify/functions/get-user-profile', {
@@ -56,19 +54,16 @@ useEffect(() => {
         body: JSON.stringify({ access_token: tokenData.access_token }),
       });
 
-      if (!profileResponse.ok) {
-        const errorData = await profileResponse.json();
-        throw new Error(errorData.error || 'Failed to fetch user profile');
+      const profileData = await profileResponse.json();
+
+      if (!profileResponse.ok || profileData.error) {
+        throw new Error(profileData.error || 'Failed to fetch user profile');
       }
 
-      const profile = await profileResponse.json();
-      console.log('Profile fetch successful');
-
-      // Add account to store
       addAccount({
-        id: profile.username,
-        username: profile.username,
-        profileImage: profile.profile_image || 'https://via.placeholder.com/50',
+        id: profileData.username,
+        username: profileData.username,
+        profileImage: profileData.profile_image || 'https://via.placeholder.com/50',
         boardsCount: 0,
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token,
@@ -77,17 +72,32 @@ useEffect(() => {
 
       navigate('/dashboard');
     } catch (error) {
-      console.error('Authentication error:', error);
-      navigate('/', { 
-        state: { 
-          error: error instanceof Error ? error.message : 'Failed to authenticate with Pinterest'
-        } 
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      console.error('Auth error:', error);
+      setError(errorMessage);
+      navigate('/', { state: { error: errorMessage } });
     }
   };
 
-  exchangeToken();
+  handleAuth();
 }, [searchParams, navigate, addAccount]);
+
+if (error) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-red-600 text-xl mb-4">⚠️ Error</div>
+        <h2 className="text-lg font-medium text-gray-900">{error}</h2>
+        <button
+          onClick={() => navigate('/')}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Return Home
+        </button>
+      </div>
+    </div>
+  );
+}
 
 return (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center">
