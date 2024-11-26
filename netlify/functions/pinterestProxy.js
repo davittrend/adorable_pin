@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   const pinterestUrl = "https://api.pinterest.com/v5/user_account";
   const response = await fetch(pinterestUrl, {
     method: "GET",
